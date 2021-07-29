@@ -1,61 +1,31 @@
-﻿import { Component, OnInit } from '@angular/core';
-import { Router, ActivatedRoute } from '@angular/router';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { first } from 'rxjs/operators';
+﻿import {Component, Output, OnInit, EventEmitter, Input} from '@angular/core';
+import { FormGroup, FormControl, Validators } from '@angular/forms';
+import { NgForm } from '@angular/forms';
 
-import { AuthenticationService } from '@app/_services';
+@Component({
+  selector: 'app-login',
+  template: `<form #form="ngForm"  novalidate>
+  <div>
 
-@Component({ templateUrl: 'login.component.html' })
-export class LoginComponent implements OnInit {
-    loginForm: FormGroup;
-    loading = false;
-    submitted = false;
-    returnUrl: string;
-    error = '';
+   <input type="text" id="username-input" name="username-input" placeholder="Password" 
+   [(ngModel)]="username" required>
+   <input type="password" id="password-input" name="password-input" placeholder="Password" 
+   [(ngModel)]="password" required>
 
-    constructor(
-        private formBuilder: FormBuilder,
-        private route: ActivatedRoute,
-        private router: Router,
-        private authenticationService: AuthenticationService
-    ) { 
-        // redirect to home if already logged in
-        if (this.authenticationService.currentUserValue) { 
-            this.router.navigate(['/']);
-        }
-    }
+   <button id="login-button" [disabled]="! form.valid" (click)="submit(username, password)" [disabled]="!form.valid">Submit</button>
+  </div>
+  </form>`
+})
+export class LoginComponent {
 
-    ngOnInit() {
-        this.loginForm = this.formBuilder.group({
-            username: ['', Validators.required],
-            password: ['', Validators.required]
-        });
+  @Output()
+  login: EventEmitter<any> = new EventEmitter();
 
-        // get return url from route parameters or default to '/'
-        this.returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/';
-    }
+  username: string = '';
+  password: string ='';
 
-    // convenience getter for easy access to form fields
-    get f() { return this.loginForm.controls; }
+  submit(username: string, password: string) {
 
-    onSubmit() {
-        this.submitted = true;
-
-        // stop here if form is invalid
-        if (this.loginForm.invalid) {
-            return;
-        }
-
-        this.loading = true;
-        this.authenticationService.login(this.f.username.value, this.f.password.value)
-            .pipe(first())
-            .subscribe(
-                data => {
-                    this.router.navigate([this.returnUrl]);
-                },
-                error => {
-                    this.error = error;
-                    this.loading = false;
-                });
-    }
+    this.login.emit({username, password});
+  }
 }
